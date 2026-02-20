@@ -1,6 +1,15 @@
 $(document).ready(function () {
     // --- State Management ---
-    let menu = JSON.parse(localStorage.getItem('restaurant_menu')) || [];
+    let menu = JSON.parse(localStorage.getItem('restaurant_menu')) || [
+        { id: 1, name: 'Sadya', category: 'veg', price: 250, image: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80' },
+        { id: 2, name: 'Beef Fry', category: 'non-veg', price: 180, image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80' },
+        { id: 3, name: 'Appam & Stew', category: 'veg', price: 150, image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80' },
+        { id: 4, name: 'Karimeen Pollichathu', category: 'seafood', price: 450, image: 'https://images.unsplash.com/photo-1544025162-d76694265947?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80' },
+        { id: 5, name: 'Puttu & Kadala', category: 'veg', price: 80, image: 'https://images.unsplash.com/photo-1626132646529-500637532938?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80' },
+        { id: 6, name: 'Chicken Biriyani', category: 'non-veg', price: 180, image: 'https://images.unsplash.com/photo-1563379091339-03b21bc4a4f8?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80' },
+        { id: 7, name: 'Lime Juice', category: 'drinks', price: 40, image: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80' },
+        { id: 8, name: 'Prawn Roast', category: 'seafood', price: 320, image: 'https://images.unsplash.com/photo-1559739511-e130c20ca6f5?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80' }
+    ];
     let kitchenOrders = JSON.parse(localStorage.getItem('restaurant_kitchen_orders')) || [];
     let customerCart = [];
 
