@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Now - Kerala Spice</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .customer-header {
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--sidebar-bg);
+            border-bottom: 1px solid var(--border-color);
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .main-content {
+            height: auto;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .header-search {
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .header-search input {
+            width: 100% !important;
+        }
+
+        @media (max-width: 600px) {
+            .customer-header {
+                flex-direction: column;
+                padding: 1rem;
+            }
+
+            .header-search {
+                width: 100%;
+                max-width: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .billing-grid {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .cart-section {
+                order: -1;
+                /* Small screens might want cart on top or floating, but let's stick to standard flow for now */
+                margin-bottom: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body class="dark-theme">
+    <div class="app-container">
+        <header class="customer-header">
+            <div class="logo">
+                <span class="logo-icon">🍲</span>
+                <span class="logo-text">Kerala Spice</span>
+            </div>
+            <div class="search-bar header-search">
+                <input type="text" id="customer-item-search" placeholder="Search for food...">
+            </div>
+            <p style="color: var(--text-secondary); font-size: 0.8rem; margin: 0;">Deliciously Kerala, delivered to your
+                table.</p>
+        </header>
+
+        <main class="main-content">
+            <div id="customer-view" class="view active" style="display: block;">
+                <header class="view-header">
+                    <h1>Menu</h1>
+                </header>
+
+                <div class="billing-grid">
+                    <section class="menu-section">
+                        <div class="category-tabs" id="customer-category-tabs">
+                            <button class="tab-btn active" data-category="all">All</button>
+                            <button class="tab-btn" data-category="veg">Veg</button>
+                            <button class="tab-btn" data-category="non-veg">Non-Veg</button>
+                            <button class="tab-btn" data-category="seafood">Seafood</button>
+                            <button class="tab-btn" data-category="drinks">Drinks</button>
+                        </div>
+                        <div id="customer-menu-grid" class="item-grid">
+                            <!-- Items will be injected by JS -->
+                        </div>
+                    </section>
+
+                    <aside class="cart-section">
+                        <div class="cart-card">
+                            <div class="cart-header">
+                                <h2>My Selection</h2>
+                                <button id="customer-clear-cart" class="btn-text">Clear</button>
+                            </div>
+                            <div id="customer-cart-items" class="cart-list">
+                                <div class="empty-cart-msg">Select items to start your order</div>
+                            </div>
+                            <div class="bill-summary">
+                                <div class="summary-line total">
+                                    <span>Total Amount</span>
+                                    <span id="customer-total">₹0.00</span>
+                                </div>
+                            </div>
+                            <div class="cart-actions">
+                                <div class="form-group" style="margin-bottom: 1rem;">
+                                    <label
+                                        style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.4rem;">Table
+                                        Number</label>
+                                    <input type="number" id="table-number" placeholder="Enter Table No." required
+                                        style="width: 100%; padding: 0.7rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 10px; color: #fff; outline: none;">
+                                </div>
+                                <button id="submit-customer-order" class="btn-primary">Place Order</button>
+                            </div>
+                        </div>
+                    </aside>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/order.js"></script>
+</body>
+
+</html>

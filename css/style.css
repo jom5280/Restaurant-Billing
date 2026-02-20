@@ -220,14 +220,20 @@ h1 {
     font-weight: 700;
 }
 
+/* Base Badge Style */
 .item-badge {
-    position: absolute;
-    top: 10px;
-    right: 10px;
     font-size: 0.7rem;
     padding: 0.2rem 0.5rem;
     border-radius: 4px;
     text-transform: uppercase;
+    white-space: nowrap;
+}
+
+/* Absolute badge for grid view only */
+.menu-item-card .item-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
 }
 
 .badge-veg {
@@ -576,17 +582,19 @@ th {
     }
 
     .nav-links {
-        gap: 0.3rem;
+        gap: 0.5rem;
         width: 100%;
         padding: 0;
+        justify-content: center;
     }
 
     .nav-links li {
-        padding: 0.4rem 0.2rem;
-        font-size: 0.75rem;
+        padding: 0.6rem 0.4rem;
+        font-size: 0.95rem;
+        /* Increased for readability */
         flex: 1;
         text-align: center;
-        border-radius: 6px;
+        border-radius: 8px;
     }
 
     .main-content {
@@ -597,16 +605,17 @@ th {
     }
 
     .view-header {
-        margin-bottom: 1.5rem;
+        margin-bottom: 1.2rem;
         text-align: center;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 1rem;
+        gap: 0.8rem;
     }
 
     .view-header h1 {
-        font-size: 1.4rem;
+        font-size: 1.2rem;
+        /* Even smaller for mobile */
         margin: 0;
         letter-spacing: -0.2px;
     }
@@ -624,17 +633,19 @@ th {
     .admin-actions .filter-select {
         width: 100%;
         text-align: center;
+        font-size: 0.9rem;
     }
 
     #add-item-cta {
         width: 100%;
-        padding: 0.8rem;
-        font-size: 1rem;
+        padding: 0.7rem;
+        font-size: 0.9rem;
     }
 
     .header-search input {
         width: 100% !important;
-        padding: 0.6rem 1rem;
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
     }
 
     .category-tabs {
@@ -643,8 +654,8 @@ th {
     }
 
     .tab-btn {
-        padding: 0.4rem 0.8rem;
-        font-size: 0.8rem;
+        padding: 0.3rem 0.7rem;
+        font-size: 0.75rem;
     }
 
     .item-grid {
@@ -693,6 +704,8 @@ th {
         padding: 0.8rem;
         border-radius: 12px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        position: relative;
+        /* Contain absolute children */
     }
 
     td {
@@ -702,6 +715,8 @@ th {
         justify-content: space-between;
         align-items: center;
         border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        font-size: 0.9rem;
+        /* Smaller cell text */
     }
 
     td:last-child {
@@ -712,15 +727,20 @@ th {
         content: attr(data-label);
         font-weight: 600;
         color: var(--text-secondary);
-        font-size: 0.8rem;
+        font-size: 0.7rem;
+        /* Smaller labels */
         opacity: 0.8;
     }
 
     /* Admin Table Mobile Fix - Additional Polish */
     .category-header-row {
         text-align: center;
-        margin-top: 1.5rem;
-        font-size: 1rem !important;
+        margin-top: 1.8rem;
+        margin-bottom: 0.5rem;
+        background: none !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
     }
 
     .category-header-row td:before {
@@ -729,7 +749,12 @@ th {
 
     .category-header-row td {
         justify-content: center;
-        font-size: 1rem;
+        font-size: 1.1rem;
+        font-weight: 800;
+        border: none !important;
+        color: var(--accent-color);
+        text-transform: uppercase;
+        letter-spacing: 2px;
     }
 
     .admin-item-img {
@@ -764,7 +789,9 @@ th {
     }
 
     .nav-links li {
-        font-size: 0.7rem;
+        font-size: 0.85rem;
+        /* Even on smallest phones, keep it readable */
+        padding: 0.5rem 0.3rem;
     }
 
     .item-grid {
@@ -845,4 +872,215 @@ th {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
     }
+}
+
+/* --- Kitchen Dashboard Styles --- */
+.kitchen-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    padding: 1rem 0;
+}
+
+.kitchen-card {
+    background-color: var(--sidebar-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    animation: fadeIn 0.4s ease-out;
+}
+
+.kitchen-card.status-pending {
+    border-left: 5px solid var(--accent-color);
+}
+
+.kitchen-card.status-preparing {
+    border-left: 5px solid #3498db;
+}
+
+.kitchen-card.status-ready {
+    border-left: 5px solid var(--success);
+}
+
+.kitchen-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.8rem;
+}
+
+.kitchen-order-id {
+    font-weight: 700;
+    color: var(--accent-color);
+}
+
+.kitchen-order-time {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.kitchen-order-items {
+    list-style: none;
+    flex: 1;
+}
+
+.kitchen-order-items li {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.kitchen-card-actions {
+    display: flex;
+    gap: 0.8rem;
+    margin-top: 1rem;
+}
+
+.kitchen-card-actions button {
+    flex: 1;
+    padding: 0.6rem;
+    font-size: 0.9rem;
+}
+
+.status-badge {
+    padding: 0.2rem 0.6rem;
+    border-radius: 50px;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.status-badge.pending {
+    background: rgba(243, 156, 18, 0.2);
+    color: var(--accent-color);
+}
+
+.status-badge.preparing {
+    background: rgba(52, 152, 219, 0.2);
+    color: #3498db;
+}
+
+.status-badge.ready {
+    background: rgba(46, 204, 113, 0.2);
+    color: var(--success);
+}
+
+/* --- Customer View Refinements --- */
+#customer-view .cart-card {
+    border-radius: 24px;
+    background: linear-gradient(145deg, var(--sidebar-bg), #1a1d26);
+}
+
+#customer-view .menu-item-card {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+@media (max-width: 768px) {
+    .kitchen-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* --- Unpaid Orders Section (Billing View) --- */
+.unpaid-section {
+    margin-bottom: 2rem;
+    background: rgba(255, 255, 255, 0.02);
+    padding: 1.2rem;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+}
+
+.unpaid-section .section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+}
+
+.unpaid-section h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.badge-count {
+    background: var(--accent-color);
+    color: #fff;
+    font-size: 0.75rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 50px;
+    font-weight: 700;
+}
+
+.unpaid-grid {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+}
+
+.unpaid-grid::-webkit-scrollbar {
+    height: 4px;
+}
+
+.unpaid-grid::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 10px;
+}
+
+.unpaid-card {
+    min-width: 140px;
+    background: var(--sidebar-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 15px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    position: relative;
+}
+
+.unpaid-card:hover {
+    border-color: var(--accent-color);
+    transform: translateY(-3px);
+    background: rgba(243, 156, 18, 0.05);
+}
+
+.unpaid-table-no {
+    display: block;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--accent-color);
+    margin-bottom: 0.3rem;
+}
+
+.unpaid-order-meta {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.unpaid-card .status-dot {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.status-dot.preparing {
+    background: #3498db;
+}
+
+.status-dot.ready {
+    background: var(--success);
+}
+
+.status-dot.pending {
+    background: var(--accent-color);
 }

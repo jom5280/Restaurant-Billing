@@ -20,7 +20,10 @@
             </div>
             <ul class="nav-links">
                 <li class="active" data-view="billing">Billing</li>
-                <li data-view="admin">Manage Menu</li>
+                <li><a href="order.html" target="_blank" style="color: inherit; text-decoration: none;">Order Now ↗</a>
+                </li>
+                <li data-view="kitchen">Kitchen</li>
+                <li data-view="admin">Admin</li>
                 <li data-view="reports">Reports</li>
             </ul>
         </header>
@@ -35,6 +38,17 @@
                         <input type="text" id="item-search" placeholder="Search menu items...">
                     </div>
                 </header>
+
+                <!-- Unpaid Orders from Tables -->
+                <section id="unpaid-orders-section" class="unpaid-section">
+                    <div class="section-title">
+                        <h3>Active Table Orders</h3>
+                        <span class="badge-count" id="unpaid-count">0</span>
+                    </div>
+                    <div id="unpaid-orders-grid" class="unpaid-grid">
+                        <!-- Unpaid order cards will be rendered here -->
+                    </div>
+                </section>
 
                 <div class="billing-grid">
                     <!-- Menu Selection -->
@@ -68,7 +82,7 @@
                                     <span id="subtotal">₹0.00</span>
                                 </div>
                                 <div class="summary-line">
-                                    <span>Tax (5%)</span>
+                                    <span>GST (2%)</span>
                                     <span id="tax">₹0.00</span>
                                 </div>
                                 <div class="summary-line total">
@@ -121,6 +135,7 @@
                 </div>
             </div>
 
+            <!-- View: Reports -->
             <div id="reports-view" class="view">
                 <header class="view-header">
                     <h1>Sales Reports</h1>
@@ -154,6 +169,19 @@
                             <!-- Sales history will be injected by JS -->
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- View: Kitchen Preparation -->
+            <div id="kitchen-view" class="view">
+                <header class="view-header">
+                    <h1>Kitchen Dashboard</h1>
+                    <div class="kitchen-stats">
+                        <span id="kitchen-pending-count">Pending: 0</span>
+                    </div>
+                </header>
+                <div id="kitchen-orders-grid" class="kitchen-grid">
+                    <!-- Cards for active orders -->
                 </div>
             </div>
         </main>

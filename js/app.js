@@ -13,12 +13,55 @@ $(document).ready(function () {
 
     let cart = [];
     let sales = JSON.parse(localStorage.getItem('restaurant_sales')) || [];
+    let kitchenOrders = JSON.parse(localStorage.getItem('restaurant_kitchen_orders')) || [];
+    let customerCart = [];
 
     // Save to LocalStorage
     function saveData() {
         localStorage.setItem('restaurant_menu', JSON.stringify(menu));
         localStorage.setItem('restaurant_sales', JSON.stringify(sales));
+        localStorage.setItem('restaurant_kitchen_orders', JSON.stringify(kitchenOrders));
     }
+
+    // --- Unpaid Orders Logic (Billing Integration) ---
+    function renderUnpaidOrders() {
+        const $grid = $('#unpaid-orders-grid');
+        const $count = $('#unpaid-count');
+        $grid.empty();
+
+        // Orders that are preparing or ready (not completed/paid)
+        const unpaid = kitchenOrders.filter(o => o.status !== 'completed' && o.status !== 'paid');
+        $count.text(unpaid.length);
+
+        if (unpaid.length === 0) {
+            $grid.append('<p style="color: var(--text-secondary); font-size: 0.8rem;">No active table orders</p>');
+            return;
+        }
+
+        unpaid.forEach(order => {
+            const card = `
+                <div class="unpaid-card" data-id="${order.id}">
+                    <span class="status-dot ${order.status}"></span>
+                    <span class="unpaid-table-no">Table ${order.tableNum}</span>
+                    <span class="unpaid-order-meta">${order.items.length} items • ${order.time}</span>
+                </div>
+            `;
+            $grid.append(card);
+        });
+    }
+
+    $(document).on('click', '.unpaid-card', function () {
+        const id = $(this).data('id');
+        const order = kitchenOrders.find(o => o.id == id);
+        if (order) {
+            if (cart.length > 0 && !confirm('The current cart is not empty. Replace it with Table ' + order.tableNum + ' order?')) {
+                return;
+            }
+            cart = [...order.items.map(item => ({ ...item, linkedOrderId: order.id }))];
+            renderCart();
+            alert('Loaded order from Table ' + order.tableNum);
+        }
+    });
 
     // --- View Switching ---
     $('.nav-links li').on('click', function () {
@@ -30,6 +73,9 @@ $(document).ready(function () {
 
         if (view === 'admin') renderAdminMenu();
         if (view === 'reports') renderReports();
+        if (view === 'customer') renderCustomerMenu();
+        if (view === 'kitchen') renderKitchen();
+        if (view === 'billing') renderUnpaidOrders();
     });
 
     // --- Billing View Logic ---
@@ -111,11 +157,11 @@ $(document).ready(function () {
 
     function updateTotals() {
         const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-        const tax = subtotal * 0.05;
-        const total = subtotal + tax;
+        const gst = subtotal * 0.02;
+        const total = subtotal + gst;
 
         $('#subtotal').text(`₹${subtotal.toFixed(2)}`);
-        $('#tax').text(`₹${tax.toFixed(2)}`);
+        $('#tax').text(`₹${gst.toFixed(2)}`);
         $('#grand-total').text(`₹${total.toFixed(2)}`);
     }
 
@@ -148,8 +194,8 @@ $(document).ready(function () {
 
     $('#confirm-payment').on('click', function () {
         const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-        const tax = subtotal * 0.05;
-        const total = subtotal + tax;
+        const gst = subtotal * 0.02;
+        const total = subtotal + gst;
 
         const order = {
             id: 'ORD-' + Date.now(),
@@ -159,10 +205,21 @@ $(document).ready(function () {
             status: 'Paid'
         };
 
+        // If this cart was linked to a kitchen order, mark it as completed/paid
+        cart.forEach(item => {
+            if (item.linkedOrderId) {
+                const kOrder = kitchenOrders.find(ko => ko.id === item.linkedOrderId);
+                if (kOrder) {
+                    kOrder.status = 'completed';
+                }
+            }
+        });
+
         sales.push(order);
         saveData();
         cart = [];
         renderCart();
+        renderUnpaidOrders(); // Refresh the list
         $('.modal').hide();
         alert('Payment Successful!');
     });
@@ -300,12 +357,20 @@ $(document).ready(function () {
         });
 
         const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-        const tax = subtotal * 0.05;
-        const total = subtotal + tax;
+        const gst = subtotal * 0.02;
+        const total = subtotal + gst;
 
         $totalSection.append(`
-            <div style="display:flex; justify-content:space-between; font-weight:bold; margin-top: 10px;">
-                <span>Total</span>
+            <div style="display:flex; justify-content:space-between; margin-bottom: 5px;">
+                <span>Subtotal</span>
+                <span>₹${subtotal.toFixed(2)}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom: 5px;">
+                <span>GST (2%)</span>
+                <span>₹${gst.toFixed(2)}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-weight:bold; margin-top: 10px; border-top: 1px dashed black; padding-top: 5px;">
+                <span>Grand Total</span>
                 <span>₹${total.toFixed(2)}</span>
             </div>
         `);
@@ -313,6 +378,165 @@ $(document).ready(function () {
         window.print();
     });
 
+    // --- Customer View Logic ---
+    function renderCustomerMenu(filter = 'all', search = '') {
+        const $grid = $('#customer-menu-grid');
+        $grid.empty();
+
+        const filtered = menu.filter(item => {
+            const matchesCat = filter === 'all' || item.category === filter;
+            const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
+            return matchesCat && matchesSearch;
+        });
+
+        filtered.forEach(item => {
+            const card = `
+                <div class="menu-item-card customer-item" data-id="${item.id}">
+                    <span class="item-badge badge-${item.category}">${item.category}</span>
+                    <img src="${item.image || 'https://via.placeholder.com/150'}" alt="${item.name}">
+                    <h3>${item.name}</h3>
+                    <p class="menu-item-price">₹${item.price}</p>
+                </div>
+            `;
+            $grid.append(card);
+        });
+    }
+
+    function renderCustomerCart() {
+        const $list = $('#customer-cart-items');
+        $list.empty();
+
+        if (customerCart.length === 0) {
+            $list.append('<div class="empty-cart-msg">Select items to start your order</div>');
+        } else {
+            customerCart.forEach((item, index) => {
+                const row = `
+                    <div class="cart-item">
+                        <div class="cart-item-info">
+                            <h4>${item.name}</h4>
+                            <span class="cart-item-qty">x${item.qty}</span>
+                        </div>
+                        <div class="cart-item-price">
+                            ₹${item.price * item.qty}
+                            <span class="remove-customer-item" data-index="${index}">✕</span>
+                        </div>
+                    </div>
+                `;
+                $list.append(row);
+            });
+        }
+        updateCustomerTotals();
+    }
+
+    function updateCustomerTotals() {
+        const total = customerCart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+        $('#customer-total').text(`₹${total.toFixed(2)}`);
+    }
+
+    $(document).on('click', '.customer-item', function () {
+        const id = $(this).data('id');
+        const item = menu.find(i => i.id == id);
+        const existing = customerCart.find(c => c.id == id);
+        if (existing) { existing.qty++; } else { customerCart.push({ ...item, qty: 1 }); }
+        renderCustomerCart();
+    });
+
+    $(document).on('click', '.remove-customer-item', function () {
+        const index = $(this).data('index');
+        customerCart.splice(index, 1);
+        renderCustomerCart();
+    });
+
+    $('#customer-clear-cart').on('click', function () {
+        customerCart = [];
+        renderCustomerCart();
+    });
+
+    $('#submit-customer-order').on('click', function () {
+        if (customerCart.length === 0) return alert('Your selection is empty!');
+
+        const order = {
+            id: 'K-' + Date.now().toString().slice(-6),
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            items: [...customerCart],
+            status: 'pending'
+        };
+
+        kitchenOrders.push(order);
+        saveData();
+        customerCart = [];
+        renderCustomerCart();
+        alert('Order submitted to kitchen! 🍲');
+    });
+
+    $('#customer-item-search').on('input', function () {
+        const filter = $('#customer-category-tabs .tab-btn.active').data('category');
+        renderCustomerMenu(filter, $(this).val());
+    });
+
+    $('#customer-category-tabs .tab-btn').on('click', function () {
+        $('#customer-category-tabs .tab-btn').removeClass('active');
+        $(this).addClass('active');
+        renderCustomerMenu($(this).data('category'), $('#customer-item-search').val());
+    });
+
+    // --- Kitchen View Logic ---
+    function renderKitchen() {
+        const $grid = $('#kitchen-orders-grid');
+        $grid.empty();
+
+        const pendingOrders = kitchenOrders.filter(o => o.status !== 'completed');
+        $('#kitchen-pending-count').text(`Pending: ${pendingOrders.length}`);
+
+        pendingOrders.forEach(order => {
+            const itemsHtml = order.items.map(i => `<li><span>${i.name}</span><span>x${i.qty}</span></li>`).join('');
+
+            const card = `
+                <div class="kitchen-card status-${order.status}">
+                    <div class="kitchen-card-header">
+                        <div style="display: flex; flex-direction: column;">
+                            <span class="kitchen-order-id">#${order.id}</span>
+                            <span style="font-size: 0.9rem; font-weight: 700; color: var(--success); margin-top: 2px;">Table: ${order.tableNum || 'N/A'}</span>
+                        </div>
+                        <span class="status-badge ${order.status}">${order.status}</span>
+                        <span class="kitchen-order-time">${order.time}</span>
+                    </div>
+                    <ul class="kitchen-order-items">${itemsHtml}</ul>
+                    <div class="kitchen-card-actions">
+                        ${order.status === 'pending' ?
+                    `<button class="btn-primary start-prep" data-id="${order.id}">Start Prep</button>` :
+                    `<button class="btn-success finish-prep" data-id="${order.id}">Order Delivered</button>`
+                }
+                    </div>
+                </div>
+            `;
+            $grid.append(card);
+        });
+    }
+
+    $(document).on('click', '.start-prep', function () {
+        const id = $(this).data('id');
+        const order = kitchenOrders.find(o => o.id == id);
+        if (order) {
+            order.status = 'preparing';
+            saveData();
+            renderKitchen();
+            renderUnpaidOrders();
+        }
+    });
+
+    $(document).on('click', '.finish-prep', function () {
+        const id = $(this).data('id');
+        const order = kitchenOrders.find(o => o.id == id);
+        if (order) {
+            order.status = 'ready';
+            saveData();
+            renderKitchen();
+            renderUnpaidOrders();
+        }
+    });
+
     // Initial Render
     renderMenu();
+    renderUnpaidOrders();
 });
