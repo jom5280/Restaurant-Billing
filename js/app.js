@@ -1,26 +1,48 @@
-$(document).ready(function () {
+$(document).ready(async function () {
     // --- State Management ---
-    let menu = JSON.parse(localStorage.getItem('restaurant_menu')) || [
-        { id: 1, name: 'Sadya', category: 'veg', price: 250, image: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80' },
-        { id: 2, name: 'Beef Fry', category: 'non-veg', price: 180, image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80' },
-        { id: 3, name: 'Appam & Stew', category: 'veg', price: 150, image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80' },
-        { id: 4, name: 'Karimeen Pollichathu', category: 'seafood', price: 450, image: 'https://images.unsplash.com/photo-1544025162-d76694265947?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80' },
-        { id: 5, name: 'Puttu & Kadala', category: 'veg', price: 80, image: 'https://images.unsplash.com/photo-1626132646529-500637532938?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80' },
-        { id: 6, name: 'Chicken Biriyani', category: 'non-veg', price: 180, image: 'https://images.unsplash.com/photo-1563379091339-03b21bc4a4f8?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80' },
-        { id: 7, name: 'Lime Juice', category: 'drinks', price: 40, image: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80' },
-        { id: 8, name: 'Prawn Roast', category: 'seafood', price: 320, image: 'https://images.unsplash.com/photo-1559739511-e130c20ca6f5?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80' }
-    ];
-
+    let menu = [];
     let cart = [];
-    let sales = JSON.parse(localStorage.getItem('restaurant_sales')) || [];
-    let kitchenOrders = JSON.parse(localStorage.getItem('restaurant_kitchen_orders')) || [];
-    let customerCart = [];
+    let sales = [];
+    let kitchenOrders = [];
 
-    // Save to LocalStorage
-    function saveData() {
-        localStorage.setItem('restaurant_menu', JSON.stringify(menu));
-        localStorage.setItem('restaurant_sales', JSON.stringify(sales));
-        localStorage.setItem('restaurant_kitchen_orders', JSON.stringify(kitchenOrders));
+    // Initialize Database
+    try {
+        await window.appDB.init();
+        await migrateData();
+        await loadAllData();
+    } catch (err) {
+        console.error("Database initialization failed:", err);
+    }
+
+    async function migrateData() {
+        if (localStorage.getItem('db_migrated')) return;
+
+        const oldMenu = JSON.parse(localStorage.getItem('restaurant_menu')) || [
+            { id: 1, name: 'Sadya', category: 'veg', price: 250, image: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80' },
+            { id: 2, name: 'Beef Fry', category: 'non-veg', price: 180, image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80' },
+            { id: 3, name: 'Appam & Stew', category: 'veg', price: 150, image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80' },
+            { id: 4, name: 'Karimeen Pollichathu', category: 'seafood', price: 450, image: 'https://images.unsplash.com/photo-1544025162-d76694265947?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80' },
+            { id: 5, name: 'Puttu & Kadala', category: 'veg', price: 80, image: 'https://images.unsplash.com/photo-1626132646529-500637532938?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80' },
+            { id: 6, name: 'Chicken Biriyani', category: 'non-veg', price: 180, image: 'https://images.unsplash.com/photo-1563379091339-03b21bc4a4f8?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80' },
+            { id: 7, name: 'Lime Juice', category: 'drinks', price: 40, image: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80' },
+            { id: 8, name: 'Prawn Roast', category: 'seafood', price: 320, image: 'https://images.unsplash.com/photo-1559739511-e130c20ca6f5?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80' }
+        ];
+        const oldSales = JSON.parse(localStorage.getItem('restaurant_sales')) || [];
+        const oldKOrders = JSON.parse(localStorage.getItem('restaurant_kitchen_orders')) || [];
+
+        for (const item of oldMenu) await window.appDB.put('menu', item);
+        for (const sale of oldSales) await window.appDB.put('sales', sale);
+        for (const order of oldKOrders) await window.appDB.put('kitchen_orders', order);
+
+        localStorage.setItem('db_migrated', 'true');
+    }
+
+    async function loadAllData() {
+        menu = await window.appDB.getAll('menu');
+        sales = await window.appDB.getAll('sales');
+        kitchenOrders = await window.appDB.getAll('kitchen_orders');
+        renderMenu();
+        renderUnpaidOrders();
     }
 
     // --- Unpaid Orders Logic (Billing Integration) ---
@@ -29,7 +51,6 @@ $(document).ready(function () {
         const $count = $('#unpaid-count');
         $grid.empty();
 
-        // Orders that are preparing or ready (not completed/paid)
         const unpaid = kitchenOrders.filter(o => o.status !== 'completed' && o.status !== 'paid');
         $count.text(unpaid.length);
 
@@ -73,7 +94,6 @@ $(document).ready(function () {
 
         if (view === 'admin') renderAdminMenu();
         if (view === 'reports') renderReports();
-        if (view === 'customer') renderCustomerMenu();
         if (view === 'kitchen') renderKitchen();
         if (view === 'billing') renderUnpaidOrders();
     });
@@ -102,24 +122,20 @@ $(document).ready(function () {
         });
     }
 
-    // Tab Filtering
     $('.tab-btn').on('click', function () {
         $('.tab-btn').removeClass('active');
         $(this).addClass('active');
         renderMenu($(this).data('category'), $('#item-search').val());
     });
 
-    // Search Filtering
     $('#item-search').on('input', function () {
         const filter = $('.tab-btn.active').data('category');
         renderMenu(filter, $(this).val());
     });
 
-    // Add to Cart
     $(document).on('click', '.menu-item-card', function () {
         const id = $(this).data('id');
         const item = menu.find(i => i.id == id);
-
         const existing = cart.find(c => c.id == id);
         if (existing) {
             existing.qty++;
@@ -159,7 +175,6 @@ $(document).ready(function () {
         const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
         const gst = subtotal * 0.02;
         const total = subtotal + gst;
-
         $('#subtotal').text(`₹${subtotal.toFixed(2)}`);
         $('#tax').text(`₹${gst.toFixed(2)}`);
         $('#grand-total').text(`₹${total.toFixed(2)}`);
@@ -176,14 +191,10 @@ $(document).ready(function () {
         renderCart();
     });
 
-    // --- Pay Now & QR ---
     $('#pay-now').on('click', function () {
         if (cart.length === 0) return alert('Cart is empty!');
-
         const total = $('#grand-total').text().replace('₹', '');
         $('#payment-modal').css('display', 'flex');
-
-        // Generate QR
         $('#qrcode').empty();
         new QRCode(document.getElementById("qrcode"), {
             text: `upi://pay?pa=merchant@upi&pn=KeralaSpice&am=${total}&cu=INR`,
@@ -192,7 +203,7 @@ $(document).ready(function () {
         });
     });
 
-    $('#confirm-payment').on('click', function () {
+    $('#confirm-payment').on('click', async function () {
         const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
         const gst = subtotal * 0.02;
         const total = subtotal + gst;
@@ -205,21 +216,21 @@ $(document).ready(function () {
             status: 'Paid'
         };
 
-        // If this cart was linked to a kitchen order, mark it as completed/paid
-        cart.forEach(item => {
+        for (const item of cart) {
             if (item.linkedOrderId) {
                 const kOrder = kitchenOrders.find(ko => ko.id === item.linkedOrderId);
                 if (kOrder) {
                     kOrder.status = 'completed';
+                    await window.appDB.put('kitchen_orders', kOrder);
                 }
             }
-        });
+        }
 
+        await window.appDB.put('sales', order);
         sales.push(order);
-        saveData();
         cart = [];
         renderCart();
-        renderUnpaidOrders(); // Refresh the list
+        renderUnpaidOrders();
         $('.modal').hide();
         alert('Payment Successful!');
     });
@@ -235,7 +246,6 @@ $(document).ready(function () {
             return matchesCat && matchesSearch;
         });
 
-        // Group by category if filter is 'all'
         const categories = filter === 'all' ? [...new Set(menu.map(i => i.category))] : [filter];
 
         categories.forEach(cat => {
@@ -265,220 +275,323 @@ $(document).ready(function () {
     });
 
     $('#add-item-cta').on('click', () => $('#item-modal').css('display', 'flex'));
-    $('.close-modal').on('click', () => $('.modal').hide());
+    $('.close-modal').on('click', () => {
+        $('.modal').hide();
+        $('#image-preview').hide();
+        $('#item-form')[0].reset();
+    });
 
-    $('#item-form').on('submit', function (e) {
+    // Handle Image Preview
+    $('#item-image').on('change', function (e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                $('#image-preview img').attr('src', e.target.result);
+                $('#image-preview').show();
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    $('#item-form').on('submit', async function (e) {
         e.preventDefault();
+        const file = $('#item-image')[0].files[0];
+        let imageData = 'https://via.placeholder.com/150';
+
+        if (file) {
+            imageData = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.readAsDataURL(file);
+            });
+        }
+
         const newItem = {
             id: Date.now(),
             name: $('#item-name').val(),
             category: $('#item-category').val(),
             price: parseFloat($('#item-price').val()),
-            image: $('#item-image').val() || 'https://via.placeholder.com/150'
+            image: imageData
         };
+
+        await window.appDB.add('menu', newItem);
         menu.push(newItem);
-        saveData();
         renderAdminMenu();
         renderMenu();
         $('#item-form')[0].reset();
+        $('#image-preview').hide();
         $('#item-modal').hide();
+        alert('Item added successfully!');
     });
 
-    $(document).on('click', '.delete-item', function () {
+    $(document).on('click', '.delete-item', async function () {
         const id = $(this).data('id');
-        menu = menu.filter(i => i.id != id);
-        saveData();
-        renderAdminMenu();
-        renderMenu();
+        if (confirm('Delete this item?')) {
+            await window.appDB.delete('menu', id);
+            menu = menu.filter(i => i.id != id);
+            renderAdminMenu();
+            renderMenu();
+        }
     });
 
-    // --- Reports View Logic ---
-    function renderReports(range = 'daily') {
-        const now = new Date();
-        let filteredSales = sales;
+    // --- Sales Performance Dashboard Logic ---
+    let dashboardState = {
+        currentPage: 1,
+        itemsPerPage: 10,
+        currentStatus: 'all',
+        selectedIds: new Set()
+    };
 
-        if (range === 'daily') {
-            filteredSales = sales.filter(s => new Date(s.date).toDateString() === now.toDateString());
-        } else if (range === 'weekly') {
-            const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-            filteredSales = sales.filter(s => new Date(s.date) >= lastWeek);
-        } else if (range === 'monthly') {
-            filteredSales = sales.filter(s => {
-                const d = new Date(s.date);
-                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-            });
+    async function renderReports() {
+        // Fetch fresh data from both stores for a unified view
+        const allSales = await window.appDB.getAll('sales');
+        const activeOrders = await window.appDB.getAll('kitchen_orders');
+
+        // Merge them for the dashboard
+        let unifiedOrders = [...allSales, ...activeOrders];
+        unifiedOrders.sort((a, b) => new Date(b.date || b.time) - new Date(a.date || a.time));
+
+        // Update Counts
+        $('#count-all').text(unifiedOrders.length);
+        $('#count-pending').text(unifiedOrders.filter(o => o.status === 'pending' || o.status === 'preparing').length);
+        $('#count-paid').text(unifiedOrders.filter(o => o.status === 'paid' || o.status === 'completed').length);
+        $('#count-cancelled').text(unifiedOrders.filter(o => o.status === 'cancelled').length);
+
+        // Filter by Status
+        let filtered = unifiedOrders;
+        if (dashboardState.currentStatus !== 'all') {
+            if (dashboardState.currentStatus === 'pending') {
+                filtered = unifiedOrders.filter(o => o.status === 'pending' || o.status === 'preparing' || o.status === 'ready');
+            } else if (dashboardState.currentStatus === 'paid') {
+                filtered = unifiedOrders.filter(o => o.status === 'paid' || o.status === 'completed');
+            } else {
+                filtered = unifiedOrders.filter(o => o.status === dashboardState.currentStatus);
+            }
         }
 
-        const totalRevenue = filteredSales.reduce((sum, s) => sum + s.total, 0);
-        $('#total-orders').text(filteredSales.length);
-        $('#total-revenue').text(`₹${totalRevenue.toFixed(2)}`);
+        // Pagination
+        const totalItems = filtered.length;
+        const totalPages = Math.ceil(totalItems / dashboardState.itemsPerPage);
+        const startIdx = (dashboardState.currentPage - 1) * dashboardState.itemsPerPage;
+        const pageData = filtered.slice(startIdx, startIdx + dashboardState.itemsPerPage);
 
-        const $body = $('#sales-history-body');
+        // Render Table
+        const $body = $('#sales-dashboard-body');
         $body.empty();
-        filteredSales.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(s => {
+
+        pageData.forEach(order => {
+            const isSelected = dashboardState.selectedIds.has(order.id.toString());
+            const itemsList = order.items.map(i => i.name).join(', ');
+
+            // Map Status to Progress & Badge
+            let progress = 0;
+            let statusClass = 'status-behind';
+            let statusLabel = order.status;
+
+            if (order.status === 'pending') { progress = 33; statusClass = 'status-behind'; }
+            else if (order.status === 'preparing') { progress = 66; statusClass = 'status-at-risk'; }
+            else if (order.status === 'ready') { progress = 90; statusClass = 'status-at-risk'; }
+            else if (order.status === 'paid' || order.status === 'completed') { progress = 100; statusClass = 'status-good'; statusLabel = 'Paid'; }
+            else if (order.status === 'cancelled') { progress = 0; statusClass = 'status-behind'; }
+
             const row = `
-                <tr>
-                    <td data-label="ID">${s.id.substring(4, 12)}...</td>
-                    <td data-label="Date">${new Date(s.date).toLocaleDateString()}</td>
-                    <td data-label="Total">₹${s.total.toFixed(2)}</td>
-                    <td data-label="Status"><span style="color:var(--success)">${s.status}</span></td>
+                <tr class="${isSelected ? 'selected' : ''}">
+                    <td>
+                        <div class="custom-checkbox ${isSelected ? 'checked' : ''}" data-id="${order.id}">
+                            <i>✓</i>
+                        </div>
+                    </td>
+                    <td data-label="Order ID" style="font-weight: 700;">#${order.id.toString().substring(0, 8)}</td>
+                    <td data-label="Items" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-secondary);">
+                        ${itemsList}
+                    </td>
+                    <td data-label="Progress">
+                        <div class="progress-container">
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill" style="width: ${progress}%; background: ${progress < 40 ? '#e74c3c' : progress < 90 ? '#f1c40f' : '#2ecc71'}"></div>
+                            </div>
+                            <span class="progress-text">${progress}%</span>
+                        </div>
+                    </td>
+                    <td data-label="Status"><span class="pill-badge ${statusClass}">${statusLabel}</span></td>
+                    <td data-label="Date" style="color: var(--text-secondary); font-size: 0.85rem;">
+                        ${new Date(order.date || order.time).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                    </td>
+                    <td data-label="Revenue" style="font-weight: 700; color: var(--accent-color);">₹${(order.total || 0).toFixed(2)}</td>
+                    <td data-label="Actions" style="text-align: right;">
+                        <div class="action-btns">
+                            <button class="icon-btn edit-order" data-id="${order.id}">✎</button>
+                            <button class="icon-btn delete-order" data-id="${order.id}">🗑</button>
+                        </div>
+                    </td>
                 </tr>
             `;
             $body.append(row);
         });
+
+        renderPagination(totalPages);
+        updateSelectedCount();
     }
 
-    $('.report-tab').on('click', function () {
-        $('.report-tab').removeClass('active');
-        $(this).addClass('active');
-        renderReports($(this).data('range'));
-    });
+    function renderPagination(totalPages) {
+        const $container = $('#sales-pagination');
+        $container.empty();
 
-    // --- Print functionality ---
-    $('#print-bill').on('click', function () {
-        if (cart.length === 0) return alert('Cart is empty!');
-
-        // Prepare Print Receipt
-        const $receiptList = $('#receipt-items-list');
-        const $totalSection = $('#receipt-total-section');
-        $receiptList.empty();
-        $totalSection.empty();
-
-        const now = new Date();
-        $('#receipt-date-time').text(now.toLocaleString());
-
-        cart.forEach(item => {
-            $receiptList.append(`
-                <div class="receipt-item-row" style="display:flex; justify-content:space-between; margin-bottom: 5px;">
-                    <span>${item.name} x ${item.qty}</span>
-                    <span>₹${(item.price * item.qty).toFixed(2)}</span>
-                </div>
-            `);
-        });
-
-        const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-        const gst = subtotal * 0.02;
-        const total = subtotal + gst;
-
-        $totalSection.append(`
-            <div style="display:flex; justify-content:space-between; margin-bottom: 5px;">
-                <span>Subtotal</span>
-                <span>₹${subtotal.toFixed(2)}</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; margin-bottom: 5px;">
-                <span>GST (2%)</span>
-                <span>₹${gst.toFixed(2)}</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; font-weight:bold; margin-top: 10px; border-top: 1px dashed black; padding-top: 5px;">
-                <span>Grand Total</span>
-                <span>₹${total.toFixed(2)}</span>
-            </div>
-        `);
-
-        window.print();
-    });
-
-    // --- Customer View Logic ---
-    function renderCustomerMenu(filter = 'all', search = '') {
-        const $grid = $('#customer-menu-grid');
-        $grid.empty();
-
-        const filtered = menu.filter(item => {
-            const matchesCat = filter === 'all' || item.category === filter;
-            const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
-            return matchesCat && matchesSearch;
-        });
-
-        filtered.forEach(item => {
-            const card = `
-                <div class="menu-item-card customer-item" data-id="${item.id}">
-                    <span class="item-badge badge-${item.category}">${item.category}</span>
-                    <img src="${item.image || 'https://via.placeholder.com/150'}" alt="${item.name}">
-                    <h3>${item.name}</h3>
-                    <p class="menu-item-price">₹${item.price}</p>
-                </div>
-            `;
-            $grid.append(card);
-        });
-    }
-
-    function renderCustomerCart() {
-        const $list = $('#customer-cart-items');
-        $list.empty();
-
-        if (customerCart.length === 0) {
-            $list.append('<div class="empty-cart-msg">Select items to start your order</div>');
-        } else {
-            customerCart.forEach((item, index) => {
-                const row = `
-                    <div class="cart-item">
-                        <div class="cart-item-info">
-                            <h4>${item.name}</h4>
-                            <span class="cart-item-qty">x${item.qty}</span>
-                        </div>
-                        <div class="cart-item-price">
-                            ₹${item.price * item.qty}
-                            <span class="remove-customer-item" data-index="${index}">✕</span>
-                        </div>
-                    </div>
-                `;
-                $list.append(row);
+        for (let i = 1; i <= totalPages; i++) {
+            const $link = $(`<div class="page-link ${i === dashboardState.currentPage ? 'active' : ''}">${i}</div>`);
+            $link.on('click', () => {
+                dashboardState.currentPage = i;
+                renderReports();
             });
+            $container.append($link);
         }
-        updateCustomerTotals();
     }
 
-    function updateCustomerTotals() {
-        const total = customerCart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-        $('#customer-total').text(`₹${total.toFixed(2)}`);
+    function updateSelectedCount() {
+        $('#selected-count').text(dashboardState.selectedIds.size);
+        if (dashboardState.selectedIds.size > 0) {
+            $('#select-all-sales').addClass('checked');
+        } else {
+            $('#select-all-sales').removeClass('checked');
+        }
     }
 
-    $(document).on('click', '.customer-item', function () {
-        const id = $(this).data('id');
-        const item = menu.find(i => i.id == id);
-        const existing = customerCart.find(c => c.id == id);
-        if (existing) { existing.qty++; } else { customerCart.push({ ...item, qty: 1 }); }
-        renderCustomerCart();
-    });
-
-    $(document).on('click', '.remove-customer-item', function () {
-        const index = $(this).data('index');
-        customerCart.splice(index, 1);
-        renderCustomerCart();
-    });
-
-    $('#customer-clear-cart').on('click', function () {
-        customerCart = [];
-        renderCustomerCart();
-    });
-
-    $('#submit-customer-order').on('click', function () {
-        if (customerCart.length === 0) return alert('Your selection is empty!');
-
-        const order = {
-            id: 'K-' + Date.now().toString().slice(-6),
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            items: [...customerCart],
-            status: 'pending'
-        };
-
-        kitchenOrders.push(order);
-        saveData();
-        customerCart = [];
-        renderCustomerCart();
-        alert('Order submitted to kitchen! 🍲');
-    });
-
-    $('#customer-item-search').on('input', function () {
-        const filter = $('#customer-category-tabs .tab-btn.active').data('category');
-        renderCustomerMenu(filter, $(this).val());
-    });
-
-    $('#customer-category-tabs .tab-btn').on('click', function () {
-        $('#customer-category-tabs .tab-btn').removeClass('active');
+    // Event Handlers
+    $(document).on('click', '.dashboard-tab', function () {
+        $('.dashboard-tab').removeClass('active');
         $(this).addClass('active');
-        renderCustomerMenu($(this).data('category'), $('#customer-item-search').val());
+        dashboardState.currentStatus = $(this).data('status');
+        dashboardState.currentPage = 1;
+        renderReports();
     });
+
+    $(document).on('click', '.custom-checkbox[data-id]', function (e) {
+        e.stopPropagation();
+        const id = $(this).data('id').toString(); // Ensure string for consistency
+        if (dashboardState.selectedIds.has(id)) {
+            dashboardState.selectedIds.delete(id);
+        } else {
+            dashboardState.selectedIds.add(id);
+        }
+        renderReports();
+    });
+
+    $('#select-all-sales').on('click', async function () {
+        const filtered = await getFilteredOrders();
+        const allFilteredSelected = filtered.every(o => dashboardState.selectedIds.has(o.id.toString()));
+
+        if (allFilteredSelected) {
+            filtered.forEach(o => dashboardState.selectedIds.delete(o.id.toString()));
+        } else {
+            filtered.forEach(o => dashboardState.selectedIds.add(o.id.toString()));
+        }
+        renderReports();
+    });
+
+    async function getFilteredOrders() {
+        const allSales = await window.appDB.getAll('sales');
+        const activeOrders = await window.appDB.getAll('kitchenOrders');
+        let unified = [...allSales, ...activeOrders];
+
+        if (dashboardState.currentStatus === 'all') return unified;
+        if (dashboardState.currentStatus === 'pending') return unified.filter(o => o.status === 'pending' || o.status === 'preparing' || o.status === 'ready');
+        if (dashboardState.currentStatus === 'paid') return unified.filter(o => o.status === 'paid' || o.status === 'completed');
+        return unified.filter(o => o.status === dashboardState.currentStatus);
+    }
+
+    $('#export-selected-btn').on('click', async function () {
+        if (dashboardState.selectedIds.size === 0) return alert('Please select at least one order to export.');
+
+        const allSales = await window.appDB.getAll('sales');
+        const activeOrders = await window.appDB.getAll('kitchen_orders');
+        const all = [...allSales, ...activeOrders];
+
+        const toExport = all.filter(o => dashboardState.selectedIds.has(o.id.toString()));
+        exportOrdersToCSV(toExport, `selected_orders_${new Date().toISOString().split('T')[0]}`);
+    });
+
+    function exportOrdersToCSV(orders, filename) {
+        let csvContent = "\uFEFFOrder ID,Date,Table,Items,Total,Status\n";
+        orders.forEach(o => {
+            const items = o.items.map(i => `${i.name} (x${i.qty})`).join('; ');
+            const row = [o.id, new Date(o.date || o.time).toLocaleString(), o.tableNum || 'N/A', `"${items}"`, o.total.toFixed(2), o.status].join(',');
+            csvContent += row + "\n";
+        });
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `Kerala_Spice_${filename}.csv`;
+        link.click();
+    }
+
+    // --- Dashboard Action Handlers ---
+    $(document).on('click', '.delete-order', async function (e) {
+        e.stopPropagation();
+        const id = $(this).data('id');
+        if (confirm('Are you sure you want to delete this order? This cannot be undone.')) {
+            // Try deleting from both potential stores
+            await window.appDB.delete('sales', id);
+            await window.appDB.delete('kitchen_orders', id);
+
+            // Clean up selection if needed
+            dashboardState.selectedIds.delete(id);
+
+            // Refresh
+            await loadAllData();
+            renderReports();
+            alert('Order deleted successfully.');
+        }
+    });
+
+    $(document).on('click', '.edit-order', async function (e) {
+        e.stopPropagation();
+        const id = $(this).data('id');
+
+        // Find the order
+        const allSales = await window.appDB.getAll('sales');
+        const activeOrders = await window.appDB.getAll('kitchen_orders');
+        const order = [...allSales, ...activeOrders].find(o => o.id == id);
+
+        if (order) {
+            $('#edit-status-id').val(order.id);
+            $('#order-status-select').val(order.status);
+            $('#status-modal').css('display', 'flex');
+        }
+    });
+
+    $('#status-form').on('submit', async function (e) {
+        e.preventDefault();
+        const id = $('#edit-status-id').val();
+        const newStatus = $('#order-status-select').val();
+
+        // 1. Try to find/update in sales
+        const salesData = await window.appDB.getAll('sales');
+        const sale = salesData.find(s => s.id == id);
+        if (sale) {
+            sale.status = newStatus;
+            await window.appDB.put('sales', sale);
+        }
+
+        // 2. Try to find/update in kitchen_orders
+        const kitchenData = await window.appDB.getAll('kitchen_orders');
+        const kOrder = kitchenData.find(o => o.id == id);
+        if (kOrder) {
+            kOrder.status = newStatus;
+            // If marked as paid, we should move it to sales (or ensure it's synced)
+            // For now, just update the status in its native store
+            await window.appDB.put('kitchen_orders', kOrder);
+        }
+
+        $('#status-modal').hide();
+        await loadAllData();
+        renderReports();
+        alert('Order status updated.');
+    });
+
+    // Initial render
+    setTimeout(renderReports, 500);
 
     // --- Kitchen View Logic ---
     function renderKitchen() {
@@ -490,7 +603,6 @@ $(document).ready(function () {
 
         pendingOrders.forEach(order => {
             const itemsHtml = order.items.map(i => `<li><span>${i.name}</span><span>x${i.qty}</span></li>`).join('');
-
             const card = `
                 <div class="kitchen-card status-${order.status}">
                     <div class="kitchen-card-header">
@@ -514,29 +626,31 @@ $(document).ready(function () {
         });
     }
 
-    $(document).on('click', '.start-prep', function () {
+    $(document).on('click', '.start-prep', async function () {
         const id = $(this).data('id');
         const order = kitchenOrders.find(o => o.id == id);
         if (order) {
             order.status = 'preparing';
-            saveData();
+            await window.appDB.put('kitchen_orders', order);
             renderKitchen();
             renderUnpaidOrders();
         }
     });
 
-    $(document).on('click', '.finish-prep', function () {
+    $(document).on('click', '.finish-prep', async function () {
         const id = $(this).data('id');
         const order = kitchenOrders.find(o => o.id == id);
         if (order) {
             order.status = 'ready';
-            saveData();
+            await window.appDB.put('kitchen_orders', order);
             renderKitchen();
             renderUnpaidOrders();
         }
     });
 
-    // Initial Render
-    renderMenu();
-    renderUnpaidOrders();
+    // --- Sync check (for SPA feel) ---
+    window.addEventListener('storage', async () => {
+        await loadAllData();
+    });
 });
+

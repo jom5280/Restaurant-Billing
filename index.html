@@ -133,41 +133,116 @@
                 </div>
             </div>
 
+            <!-- Status Edit Modal -->
+            <div id="status-modal" class="modal">
+                <div class="modal-content">
+                    <h2>Update Order Status</h2>
+                    <form id="status-form">
+                        <input type="hidden" id="edit-status-id">
+                        <div class="form-group">
+                            <label for="order-status-select">Select New Status</label>
+                            <select id="order-status-select">
+                                <option value="pending">Pending</option>
+                                <option value="preparing">Preparing</option>
+                                <option value="ready">Ready</option>
+                                <option value="paid">Paid</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                        <div class="modal-actions">
+                            <button type="button" class="btn-secondary"
+                                onclick="$('#status-modal').hide()">Cancel</button>
+                            <button type="submit" class="btn-primary">Update Status</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             <!-- View: Reports -->
             <div id="reports-view" class="view">
                 <header class="view-header">
-                    <h1>Sales Reports</h1>
-                    <div class="report-filters">
-                        <button class="report-tab active" data-range="daily">Daily</button>
-                        <button class="report-tab" data-range="weekly">Weekly</button>
-                        <button class="report-tab" data-range="monthly">Monthly</button>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <h1 style="margin: 0; font-size: 1.8rem;">Sales Performance Dashboard</h1>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem;">Monitor and manage your restaurant
+                            sales and order progress</p>
+                    </div>
+                    <div class="header-actions">
+                        <button id="add-order-cta" class="btn-lime">
+                            <span style="font-size: 1.2rem;">+</span> Refresh Data
+                        </button>
                     </div>
                 </header>
-                <div class="report-stats">
-                    <div class="stat-card">
-                        <h3>Total Orders</h3>
-                        <p id="total-orders">0</p>
+
+                <!-- Status Filter Tabs -->
+                <div class="dashboard-filter-tabs">
+                    <div class="dashboard-tab active" data-status="all">
+                        All Sales <span class="count" id="count-all">0</span>
                     </div>
-                    <div class="stat-card">
-                        <h3>Total Revenue</h3>
-                        <p id="total-revenue">₹0.00</p>
+                    <div class="dashboard-tab" data-status="pending">
+                        <span style="color: #f1c40f;">●</span> Pending <span class="count" id="count-pending">0</span>
+                    </div>
+                    <div class="dashboard-tab" data-status="paid">
+                        <span style="color: #2ecc71;">●</span> Paid <span class="count" id="count-paid">0</span>
+                    </div>
+                    <div class="dashboard-tab" data-status="cancelled">
+                        <span style="color: #e74c3c;">●</span> Cancelled <span class="count"
+                            id="count-cancelled">0</span>
                     </div>
                 </div>
-                <div class="reports-container">
-                    <table id="sales-history-table">
+
+                <!-- Modern Dashboard Table -->
+                <div class="dashboard-table-container">
+                    <table class="dashboard-table">
                         <thead>
                             <tr>
-                                <th>ID</th>
-                                <th>Date</th>
-                                <th>Total</th>
+                                <th style="width: 40px;">
+                                    <div class="custom-checkbox" id="select-all-sales">
+                                        <i>✓</i>
+                                    </div>
+                                </th>
+                                <th>Order ID</th>
+                                <th>Items</th>
+                                <th>Progress</th>
                                 <th>Status</th>
+                                <th>Date & Time</th>
+                                <th>Revenue</th>
+                                <th style="text-align: right;">Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="sales-history-body">
-                            <!-- Sales history will be injected by JS -->
+                        <tbody id="sales-dashboard-body">
+                            <!-- Sales rows will be injected by JS -->
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Dashboard Footer / Pagination -->
+                <div class="dashboard-footer">
+                    <div class="bulk-actions-status">
+                        <span id="selected-count">0</span> items selected
+                    </div>
+                    <div class="pagination-controls" style="display: flex; align-items: center; gap: 2rem;">
+                        <div class="pagination" id="sales-pagination">
+                            <!-- Page numbers injected by JS -->
+                        </div>
+                        <button class="btn-lime" id="export-selected-btn">
+                            <span style="font-size: 1.2rem;">📥</span> Export Selected
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Old Report Section (Hidden/Integrated) -->
+                <div style="display: none;">
+                    <div class="report-header">
+                        <div class="report-tabs">
+                            <span class="report-tab active" data-range="daily">Daily View</span>
+                        </div>
+                    </div>
+                    <div class="report-stats">
+                        <p id="total-orders">0</p>
+                        <p id="total-revenue">₹0.00</p>
+                    </div>
+                </div>
+
             </div>
 
             <!-- View: Kitchen Preparation -->
@@ -208,8 +283,12 @@
                     <input type="number" id="item-price" required>
                 </div>
                 <div class="form-group">
-                    <label>Image URL</label>
-                    <input type="text" id="item-image" placeholder="Paste image URL here">
+                    <label>Item Image</label>
+                    <input type="file" id="item-image" accept="image/*" style="padding: 0.5rem 0;">
+                    <div id="image-preview" style="margin-top: 10px; display: none;">
+                        <img src="" alt="Preview"
+                            style="max-width: 100%; border-radius: 10px; border: 1px solid var(--border-color);">
+                    </div>
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn-secondary close-modal">Cancel</button>
@@ -245,6 +324,7 @@
         </div>
     </div>
 
+    <script src="js/db.js"></script>
     <script src="js/app.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </body>
