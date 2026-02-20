@@ -5,27 +5,82 @@ $(document).ready(async function () {
     let sales = [];
     let kitchenOrders = [];
 
-    // Initialize Database
-    try {
-        await window.appDB.init();
-        await migrateData();
-        await loadAllData();
-    } catch (err) {
-        console.error("Database initialization failed:", err);
-    }
-
     async function migrateData() {
         if (localStorage.getItem('db_migrated')) return;
 
-        const oldMenu = JSON.parse(localStorage.getItem('restaurant_menu')) || [
-            { id: 1, name: 'Sadya', category: 'veg', price: 250, image: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80' },
-            { id: 2, name: 'Beef Fry', category: 'non-veg', price: 180, image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80' },
-            { id: 3, name: 'Appam & Stew', category: 'veg', price: 150, image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80' },
-            { id: 4, name: 'Karimeen Pollichathu', category: 'seafood', price: 450, image: 'https://images.unsplash.com/photo-1544025162-d76694265947?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80' },
-            { id: 5, name: 'Puttu & Kadala', category: 'veg', price: 80, image: 'https://images.unsplash.com/photo-1626132646529-500637532938?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80' },
-            { id: 6, name: 'Chicken Biriyani', category: 'non-veg', price: 180, image: 'https://images.unsplash.com/photo-1563379091339-03b21bc4a4f8?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80' },
-            { id: 7, name: 'Lime Juice', category: 'drinks', price: 40, image: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80' },
-            { id: 8, name: 'Prawn Roast', category: 'seafood', price: 320, image: 'https://images.unsplash.com/photo-1559739511-e130c20ca6f5?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80' }
+        const oldMenu = [
+            // Breads & Breakfast
+            { id: 1, name: 'Appam (2pc)', category: 'veg', price: 30, image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=400&q=80' },
+            { id: 2, name: 'Idiyappam (3pc)', category: 'veg', price: 45, image: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&w=400&q=80' },
+            { id: 3, name: 'Kerala Paratha (2pc)', category: 'veg', price: 50, image: 'https://images.unsplash.com/photo-1626132646529-500637532938?auto=format&fit=crop&w=400&q=80' },
+            { id: 4, name: 'Chiratta Puttu', category: 'veg', price: 40, image: 'https://images.unsplash.com/photo-1626132646529-500637532938?auto=format&fit=crop&w=400&q=80' },
+            { id: 5, name: 'Wheat Paratha', category: 'veg', price: 30, image: 'https://images.unsplash.com/photo-1593560704563-f175a22baa19?auto=format&fit=crop&w=400&q=80' },
+            { id: 6, name: 'Masala Dosa', category: 'veg', price: 80, image: 'https://images.unsplash.com/photo-1630409351241-e90e7f5e434d?auto=format&fit=crop&w=400&q=80' },
+
+            // Special Kizhi Items
+            { id: 7, name: 'Chicken Kizhi Porotta', category: 'non-veg', price: 200, image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=400&q=80' },
+            { id: 8, name: 'Chicken Kizhi', category: 'non-veg', price: 220, image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=400&q=80' },
+            { id: 9, name: 'Beef Kizhi', category: 'non-veg', price: 240, image: 'https://images.unsplash.com/photo-1514327605112-b887c0e61c0a?auto=format&fit=crop&w=400&q=80' },
+            { id: 10, name: 'Prawns Kizhi', category: 'seafood', price: 330, image: 'https://images.unsplash.com/photo-1559739511-e130c20ca6f5?auto=format&fit=crop&w=400&q=80' },
+
+            // Beef Specialties
+            { id: 11, name: 'Dragon Beef', category: 'non-veg', price: 320, image: 'https://images.unsplash.com/photo-1514327605112-b887c0e61c0a?auto=format&fit=crop&w=400&q=80' },
+            { id: 12, name: 'Beef Roast', category: 'non-veg', price: 170, image: 'https://images.unsplash.com/photo-1514327605112-b887c0e61c0a?auto=format&fit=crop&w=400&q=80' },
+            { id: 13, name: 'Beef Kothu Parotta', category: 'non-veg', price: 180, image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=400&q=80' },
+            { id: 14, name: 'Idi Irachi Beef', category: 'non-veg', price: 290, image: 'https://images.unsplash.com/photo-1514327605112-b887c0e61c0a?auto=format&fit=crop&w=400&q=80' },
+            { id: 15, name: 'Beef Kondattom', category: 'non-veg', price: 270, image: 'https://images.unsplash.com/photo-1514327605112-b887c0e61c0a?auto=format&fit=crop&w=400&q=80' },
+
+            // Chicken Dishes
+            { id: 16, name: 'Chicken Biryani', category: 'non-veg', price: 190, image: 'https://images.unsplash.com/photo-1563379091339-03b21bc4a4f8?auto=format&fit=crop&w=400&q=80' },
+            { id: 17, name: 'Chicken Manchurian', category: 'non-veg', price: 220, image: 'https://images.unsplash.com/photo-1525755662778-989d0524087e?auto=format&fit=crop&w=400&q=80' },
+            { id: 18, name: 'Chicken Fry', category: 'non-veg', price: 230, image: 'https://images.unsplash.com/photo-1562967914-608f82629710?auto=format&fit=crop&w=400&q=80' },
+            { id: 19, name: 'Dragon Chicken', category: 'non-veg', price: 280, image: 'https://images.unsplash.com/photo-1525755662778-989d0524087e?auto=format&fit=crop&w=400&q=80' },
+            { id: 20, name: 'Chicken Kondattom', category: 'non-veg', price: 260, image: 'https://images.unsplash.com/photo-1525755662778-989d0524087e?auto=format&fit=crop&w=400&q=80' },
+            { id: 21, name: 'Chilli Chicken Dry', category: 'non-veg', price: 250, image: 'https://images.unsplash.com/photo-1525755662778-989d0524087e?auto=format&fit=crop&w=400&q=80' },
+
+            // Duck, Mutton & Exotic
+            { id: 22, name: 'Duck Pepper Roast', category: 'non-veg', price: 350, image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=400&q=80' },
+            { id: 23, name: 'Mutton Pepper Roast', category: 'non-veg', price: 250, image: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=400&q=80' },
+            { id: 24, name: 'Rabbit Pepper Roast', category: 'non-veg', price: 350, image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=400&q=80' },
+            { id: 25, name: 'Kada Roast', category: 'non-veg', price: 180, image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=400&q=80' },
+            { id: 26, name: 'Pork Piralan', category: 'non-veg', price: 330, image: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=400&q=80' },
+
+            // Seafood
+            { id: 27, name: 'Motha Roast (Fish)', category: 'seafood', price: 350, image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=400&q=80' },
+            { id: 28, name: 'Kerala Fish Curry', category: 'seafood', price: 150, image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=400&q=80' },
+            { id: 29, name: 'Fish Finger', category: 'seafood', price: 140, image: 'https://images.unsplash.com/photo-1599084993091-1cb5c0721cc6?auto=format&fit=crop&w=400&q=80' },
+            { id: 30, name: 'Prawns 65 Dry', category: 'seafood', price: 320, image: 'https://images.unsplash.com/photo-1559739511-e130c20ca6f5?auto=format&fit=crop&w=400&q=80' },
+            { id: 31, name: 'Karimeen Pollichathu', category: 'seafood', price: 450, image: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=400&q=80' },
+
+            // Veg Curries
+            { id: 32, name: 'Kadhai Paneer', category: 'veg', price: 210, image: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?auto=format&fit=crop&w=400&q=80' },
+            { id: 33, name: 'Kadala Curry', category: 'veg', price: 50, image: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=400&q=80' },
+            { id: 34, name: 'Gobi Manchurian', category: 'veg', price: 140, image: 'https://images.unsplash.com/photo-1613292443284-8d10ef9383fe?auto=format&fit=crop&w=400&q=80' },
+
+            // Rice, Noodles & Biryani
+            { id: 35, name: 'Mixed Noodles', category: 'non-veg', price: 190, image: 'https://images.unsplash.com/photo-1585032226651-759b368d7246?auto=format&fit=crop&w=400&q=80' },
+            { id: 36, name: 'Chicken Noodles', category: 'non-veg', price: 170, image: 'https://images.unsplash.com/photo-1585032226651-759b368d7246?auto=format&fit=crop&w=400&q=80' },
+            { id: 37, name: 'Egg Biryani', category: 'non-veg', price: 140, image: 'https://images.unsplash.com/photo-1563379091339-03b21bc4a4f8?auto=format&fit=crop&w=400&q=80' },
+            { id: 38, name: 'Veg Fried Rice', category: 'veg', price: 140, image: 'https://images.unsplash.com/photo-1585032226651-759b368d7246?auto=format&fit=crop&w=400&q=80' },
+
+            // Shalimar Unique Additions
+            { id: 43, name: 'Butter Chicken', category: 'non-veg', price: 320, image: 'https://images.unsplash.com/photo-1603894584100-30062bc40280?auto=format&fit=crop&w=400&q=80' },
+            { id: 44, name: 'Mutton Biryani', category: 'non-veg', price: 390, image: 'https://images.unsplash.com/photo-1541529086526-db283c563270?auto=format&fit=crop&w=400&q=80' },
+            { id: 45, name: 'Koonthal (Squid) Roast', category: 'seafood', price: 230, image: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=400&q=80' },
+            { id: 46, name: 'Beef Biryani', category: 'non-veg', price: 240, image: 'https://images.unsplash.com/photo-1563379091339-03b21bc4a4f8?auto=format&fit=crop&w=400&q=80' },
+            { id: 47, name: 'Fish Roast', category: 'seafood', price: 190, image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=400&q=80' },
+            { id: 48, name: 'Podimeen Fry', category: 'seafood', price: 110, image: 'https://images.unsplash.com/photo-1599084993091-1cb5c0721cc6?auto=format&fit=crop&w=400&q=80' },
+            { id: 49, name: 'Paneer Roller Tikka', category: 'veg', price: 200, image: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?auto=format&fit=crop&w=400&q=80' },
+            { id: 50, name: 'Chicken 65', category: 'non-veg', price: 220, image: 'https://images.unsplash.com/photo-1562967914-608f82629710?auto=format&fit=crop&w=400&q=80' },
+            { id: 51, name: 'Ginger Chicken', category: 'non-veg', price: 220, image: 'https://images.unsplash.com/photo-1525755662778-989d0524087e?auto=format&fit=crop&w=400&q=80' },
+            { id: 52, name: 'Tomato Fry', category: 'veg', price: 120, image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=400&q=80' },
+            { id: 53, name: 'Chicken Stew', category: 'non-veg', price: 220, image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=400&q=80' },
+
+            // Drinks & Snacks
+            { id: 39, name: 'Fresh Lime', category: 'drinks', price: 30, image: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=400&q=80' },
+            { id: 40, name: 'Cold Coffee', category: 'drinks', price: 80, image: 'https://images.unsplash.com/photo-1541167760496-162955ed8a9f?auto=format&fit=crop&w=400&q=80' },
+            { id: 41, name: 'Tea', category: 'drinks', price: 15, image: 'https://images.unsplash.com/photo-1544787210-2213d64ad996?auto=format&fit=crop&w=400&q=80' },
+            { id: 42, name: 'Onion Pakoda', category: 'veg', price: 100, image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=400&q=80' }
         ];
         const oldSales = JSON.parse(localStorage.getItem('restaurant_sales')) || [];
         const oldKOrders = JSON.parse(localStorage.getItem('restaurant_kitchen_orders')) || [];
@@ -35,6 +90,25 @@ $(document).ready(async function () {
         for (const order of oldKOrders) await window.appDB.put('kitchen_orders', order);
 
         localStorage.setItem('db_migrated', 'true');
+    }
+
+    $('#reset-menu-btn').on('click', async function () {
+        if (confirm('Are you sure you want to reset the menu to default Aiswarya Restaurant items? This will remove all custom items.')) {
+            await window.appDB.clear('menu');
+            localStorage.removeItem('db_migrated');
+            await migrateData();
+            await loadAllData();
+            alert('Menu has been reset to default.');
+        }
+    });
+
+    // Initialize Database
+    try {
+        await window.appDB.init();
+        await migrateData();
+        await loadAllData();
+    } catch (err) {
+        console.error("Database initialization failed:", err);
     }
 
     async function loadAllData() {
